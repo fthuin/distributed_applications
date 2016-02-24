@@ -1,0 +1,13 @@
+parent = null
+n = total number of nodes
+
+send <a> to all neighbors
+wait to receive n-1 <b>
+
+when receive <a> from p:
+    if parent == null:
+        parent := p
+        forward <a> to all neighbors except <parent>
+        send <b> to parent
+when receive <b>:
+    send <b> to parent

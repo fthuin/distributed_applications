@@ -1,0 +1,273 @@
+\documentclass{beamer}
+
+\usepackage{graphicx} % Gestion des images
+\usepackage{graphics} % Gestion de placement d'images
+\usepackage{hyperref} % Référence liée
+\usepackage[french]{babel} % Langue du document
+\usepackage[utf8]{inputenc} % Encodage du document
+\usepackage[T1]{fontenc} % Encodage de la police
+\usepackage[babel=true]{csquotes} % Utilisation d'enquote
+\usepackage{listings} % Source code
+\usepackage{tikz}
+
+\usetikzlibrary{arrows, shapes, positioning}
+
+% Declare layers
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\tikzstyle{vertex}=[circle,fill=black!25,minimum size=20pt,inner sep=0pt]
+\tikzstyle{selected vertex} = [vertex, fill=red!24]
+\tikzstyle{edge} = [draw,thick,-]
+\tikzstyle{edge arrow} = [draw,thick,->]
+\tikzstyle{weight} = [font=\small]
+\tikzstyle{selected edge} = [draw,line width=5pt,-,red!50]
+\tikzstyle{ignored edge} = [draw,line width=5pt,-,black!20]
+
+
+\lstset{basicstyle=\footnotesize,
+        frame=single,
+        morekeywords={except,forward,from,if,receive,send,to,wait,when},
+        numbers=left,
+        numberstyle=\tiny\color{gray},
+        captionpos=below}
+
+\newenvironment{wideitemize}{\itemize\addtolength{\itemsep}{10pt}}{\enditemize}
+
+\mode<presentation>
+	{
+	\usetheme{basic}
+	%\usetheme{Pittsburgh}
+	\setbeamercovered{transparent = 28}
+	}
+
+
+\logo{logo_epl.png}
+\title{Time complexity}
+\subtitle{Broadcasting}
+\author{Florian Thuin}
+\institute{Ecole Polytechnique de Louvain}
+\abrevinstitute{Ecole Polytechnique de Louvain}
+
+\begin{document}
+
+
+\begin{frame}[plain]
+	\titlepage{}
+\end{frame}
+
+
+\AtBeginSection[]
+{
+   \begin{frame}
+       \frametitle{Plan}
+       \tableofcontents[currentsection]
+   \end{frame}
+}
+
+\section{Introduction}
+
+\begin{frame}
+    \frametitle{Introduction}
+
+    The \textbf{time complexity} is the maximum time until the termination for
+    all admissible timed executions. \newline
+
+    In a distributed system, we consider a broadcast algorithm and the questions
+    are:
+
+    \begin{itemize}
+        \item What happens if the message delay is exactly 1 time unit?
+        \item What happens if the message delay is \textit{at most} 1 time unit?
+    \end{itemize}
+\end{frame}
+
+\section{Code}
+
+\begin{frame}
+	\frametitle{Broadcasting algorithm}
+    \textbf{Init}:
+    \lstinputlisting[firstline=1, lastline=2]{broadcasting.code}
+    \textbf{Source}:
+    \lstinputlisting[firstline=4, lastline=5]{broadcasting.code}
+    \textbf{Others}:
+    \lstinputlisting[firstline=7]{broadcasting.code}
+\end{frame}
+
+\section{Message delay of 1 time unit}
+
+\begin{frame}
+    \frametitle{Message delay of 1 time unit: Init}
+    \begin{minipage}{0.45\linewidth}
+    \begin{tikzpicture}
+        \node[vertex] (S) {$S$};
+        \node[vertex] (1) [below = 1cm of S] {$1$};
+        \node[vertex] (2) [right = 1cm of S] {$2$};
+        \node[vertex] (3) [below = 1cm of 2] {$3$};
+        \node[vertex] (4) [below = 1cm of 1] {$4$};
+        \node[vertex] (5) [below = 1cm of 3] {$5$};
+        \node[vertex] (6) [right = 1cm of 3] {$6$};
+        \path[edge]
+        (S) edge node {} (1)
+        (S) edge node {} (2)
+        (S) edge node {} (3)
+        (1) edge node {} (3)
+        (1) edge node {} (4)
+        (2) edge node {} (3)
+        (2) edge node {} (6)
+        (3) edge node {} (6)
+        (3) edge node {} (5)
+        (4) edge node {} (5)
+        ;
+    \end{tikzpicture}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+        T = 0 \\
+        $n = 7$ \\
+        $S$ is the source \\
+        $1::$ parent:= null \\
+        $2::$ parent:= null \\
+        $3::$ parent:= null \\
+        $4::$ parent:= null \\
+        $5::$ parent:= null \\
+        $6::$ parent:= null \\
+    \end{minipage}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Message delay of 1 time unit: Source}
+    \begin{minipage}{0.45\linewidth}
+    \begin{tikzpicture}
+        \node[selected vertex] (S) {$S$};
+        \node[vertex] (1) [below = 1cm of S] {$1$};
+        \node[vertex] (2) [right = 1cm of S] {$2$};
+        \node[vertex] (3) [below = 1cm of 2] {$3$};
+        \node[vertex] (4) [below = 1cm of 1] {$4$};
+        \node[vertex] (5) [below = 1cm of 3] {$5$};
+        \node[vertex] (6) [right = 1cm of 3] {$6$};
+        \node[draw, above = 0.1cm of S] {\tiny send <a>};
+        \path[edge]
+        (S) edge node {} (1)
+        (S) edge node {} (2)
+        (S) edge node {} (3)
+        (1) edge node {} (3)
+        (1) edge node {} (4)
+        (2) edge node {} (3)
+        (2) edge node {} (6)
+        (3) edge node {} (6)
+        (3) edge node {} (5)
+        (4) edge node {} (5)
+        ;
+    \end{tikzpicture}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+        \scriptsize \{ \} \\ \normalsize
+        Time = 0\\
+        $n = 7$ \\
+        $S$ is waiting for $6$ <b> \\
+        $1::$ parent:= null \\
+        $2::$ parent:= null \\
+        $3::$ parent:= null \\
+        $4::$ parent:= null \\
+        $5::$ parent:= null \\
+        $6::$ parent:= null \\
+        \scriptsize \{ S sends <a> to all neighbors \}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Message delay of 1 time unit: Running}
+    \begin{minipage}{0.45\linewidth}
+    \begin{tikzpicture}
+        \node[selected vertex] (S) {$S$};
+        \node[selected vertex] (1) [below = 1cm of S] {$1$};
+        \node[selected vertex] (2) [right = 1cm of S] {$2$};
+        \node[selected vertex] (3) [below = 1cm of 2] {$3$};
+        \node[vertex] (4) [below = 1cm of 1] {$4$};
+        \node[vertex] (5) [below = 1cm of 3] {$5$};
+        \node[vertex] (6) [right = 1cm of 3] {$6$};
+        \path[edge]
+        (1) edge node {} (3)
+        (1) edge node {} (4)
+        (2) edge node {} (3)
+        (2) edge node {} (6)
+        (3) edge node {} (6)
+        (3) edge node {} (5)
+        (4) edge node {} (5)
+        ;
+        \path[edge arrow]
+        (S) edge node {} (1)
+        (S) edge node {} (2)
+        (S) edge node {} (3)
+        ;
+    \end{tikzpicture}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+        \scriptsize \{ 1,2,3 receive <a> \} \\ \normalsize
+        T = 1\\
+        $n = 7$ \\
+        $S$ is waiting for $6$ <b> \\
+        $1::$ parent:= $S$ \\
+        $2::$ parent:= $S$ \\
+        $3::$ parent:= $S$ \\
+        $4::$ parent:= null \\
+        $5::$ parent:= null \\
+        $6::$ parent:= null \\
+        \scriptsize \{ 1,2,3 forward <a> to all neighbors except parent ;
+        1,2,3 send <b> to parent
+        \}
+    \end{minipage}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Message delay of 1 time unit: Running}
+    \begin{minipage}{0.45\linewidth}
+    \begin{tikzpicture}
+        \node[selected vertex] (S) {$S$};
+        \node[selected vertex] (1) [below = 1cm of S] {$1$};
+        \node[selected vertex] (2) [right = 1cm of S] {$2$};
+        \node[selected vertex] (3) [below = 1cm of 2] {$3$};
+        \node[selected vertex] (4) [below = 1cm of 1] {$4$};
+        \node[selected vertex] (5) [below = 1cm of 3] {$5$};
+        \node[selected vertex] (6) [right = 1cm of 3] {$6$};
+        \node[draw, above = 0cm of S] {\tiny rcv 3 <b>};
+        \node[draw, below = 0cm of 4] {\tiny rcv <a> from 1};
+        \node[draw, below = 0cm of 5] {\tiny rcv <a> from 3};
+        \node[draw, above = 0cm of 6, align=left] {\tiny rcv <a> from 2};
+        \node[draw, below = 0cm of 6, align=left] {\tiny rcv <a> from 3};
+        \path[edge]
+        (4) edge node {} (5)
+        ;
+        \path[edge arrow]
+        (1) edge node {} (S)
+        (2) edge node {} (S)
+        (3) edge node {} (S)
+        (1) edge node {} (3)
+        (1) edge node {} (4)
+        (2) edge node {} (3)
+        (2) edge node {} (6)
+        (3) edge node {} (6)
+        (3) edge node {} (5)
+        (3) edge node {} (1)
+        (3) edge node {} (2)
+        ;
+    \end{tikzpicture}
+    \end{minipage}
+    \begin{minipage}{0.45\linewidth}
+        \scriptsize \{1,2,3 receives 3 <b>; 4,5,6 receives <a>\} \\ \normalsize
+        T = 2\\
+        $n = 7$ \\
+        $S$ is waiting for $3$ <b> \\
+        $1::$ parent:= $S$ \\
+        $2::$ parent:= $S$ \\
+        $3::$ parent:= $S$ \\
+        $4::$ parent:= $1$ \\
+        $5::$ parent:= $3$ \\
+        $6::$ parent:= $2$ \\
+        \scriptsize
+        <a> are discarded where parent!= null\\
+        \{  \}
+    \end{minipage}
+\end{frame}
+
+\end{document}
